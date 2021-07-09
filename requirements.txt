@@ -1,0 +1,6 @@
+certifi==2021.5.30
+cffi==1.14.5
+numpy==1.19.5
+pycparser==2.20
+tcod==12.7.1
+typing-extensions==3.10.0.0
