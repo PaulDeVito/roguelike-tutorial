@@ -3,8 +3,8 @@ import tcod
 
 from engine import Engine
 from entity import Entity
-from game_map import GameMap
 from input_handlers import EventHandler
+from procgen import generate_dungeon
 
 
 def main() -> None:
@@ -13,7 +13,7 @@ def main() -> None:
     screen_height = 50
 
     map_width = 80
-    map_heght = 45
+    map_height = 45
 
     tileset = tcod.tileset.load_tilesheet(
         "chars.png", 32, 8, tcod.tileset.CHARMAP_TCOD
@@ -27,7 +27,7 @@ def main() -> None:
     npc = Entity(center_x - 5, center_y, "@", (255, 255, 0))
     entities = {npc, player}
 
-    game_map = GameMap(map_width, map_heght)
+    game_map = generate_dungeon(map_width, map_height)
 
     engine = Engine(entities=entities, event_handler=event_handler, game_map=game_map, player=player)
 
