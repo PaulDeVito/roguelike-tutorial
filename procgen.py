@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 import random
-from typing import Iterable, Iterator, Tuple
+from typing import Iterator, List, Tuple, TYPE_CHECKING
 
 import tcod
 
 from game_map import GameMap
 import tile_types
+
+
+if TYPE_CHECKING:
+    from entity import Entity
+
 
 class RectangularRoom:
     def __init__(self, x: int, y: int, width: int, height: int):
@@ -33,6 +40,7 @@ class RectangularRoom:
             and self.y2 >= other.y1
         )
 
+
 def tunnel_between(
     start: Tuple[int, int], end: Tuple[int, int]
 ) -> Iterator[Tuple[int, int]]:
@@ -50,16 +58,43 @@ def tunnel_between(
     for x, y in tcod.los.bresenham((corner_x, corner_y), (x2, y2)).tolist():
         yield x, y
 
-def generate_dungeon(map_width, map_height) -> GameMap:
+
+def generate_dungeon(
+    max_rooms: int,
+    room_min_size: int,
+    room_max_size: int,
+    map_width: int,
+    map_height: int,
+    player: Entity,
+) -> GameMap:
+    """Generate a new dungeon map."""
     dungeon = GameMap(map_width, map_height)
 
-    room1 = RectangularRoom(x=20, y=15, width=10, height=15)
-    room2 = RectangularRoom(x=35, y=15, width=10, height=15)
+    rooms: List[RectangularRoom] = []
 
-    dungeon.tiles[room1.inner] = tile_types.floor
-    dungeon.tiles[room2.inner] = tile_types.floor
+    for r in range(max_rooms):
+        room_width = random.randint(room_min_size, room_max_size)
+        room_height = random.randint(room_min_size, room_max_size)
 
-    for x, y in tunnel_between(room2.center, room1.center):
-        dungeon.tiles[x, y] = tile_types.floor
+        x =random.randint(0, dungeon.width - room_width - 1)
+        y =random.randint(0, dungeon.height - room_height - 1)
+
+        new_room = RectangularRoom(x, y, room_width, room_height)
+
+        # Run through other rooms and see if they intersect with this one
+        if any(new_room.intersects(other_room) for other_room in rooms):
+            continue
+
+        dungeon.tiles[new_room.inner] = tile_types.floor
+
+        if len(rooms) == 0:
+            # Player starts in the first room generated
+            player.x, player.y = new_room.center
+        else:
+            # Dig a tunnel between this room and the previous room
+            for x, y in tunnel_between(rooms[-1].center, new_room.center):
+                dungeon.tiles[x, y] = tile_types.floor
+
+        rooms.append(new_room)
 
     return dungeon
